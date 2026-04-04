@@ -1,13 +1,12 @@
 require('dotenv').config();
-
 const express = require('express');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
 app.use(express.json());
 
-const logger = require('./utils/logger')
-
+// health check
 app.get('/health', (req, res) => {
     const response = {
         status: 'ok',
@@ -15,19 +14,19 @@ app.get('/health', (req, res) => {
         aiProvider: process.env.AI_PROVIDER,
         aiModel: process.env.AI_MODEL
     };
-
-    // sends response to HTTP client (Postman/browser)
     res.json(response);
-
-    // logs same response to console in pretty format
-    logger.info(response, 'Health check hit');
 });
+
+// mount chat routes under /api prefix
+// all routes in chatRoutes.js are prefixed with /api
+// POST /chat becomes POST /api/chat
+// GET /providers becomes GET /api/providers
+app.use('/api', chatRoutes);
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    logger.info(`Server is running on port:${PORT}`);
-    logger.info(`Mock mode: ${process.env.USE_MOCK}`);
-    logger.info(`AI provider: ${process.env.AI_PROVIDER}`);
-    logger.info(`AI model: ${process.env.AI_MODEL}`);
-})
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Mock mode: ${process.env.USE_MOCK}`);
+    console.log(`AI Provider: ${process.env.AI_PROVIDER}`);
+});
