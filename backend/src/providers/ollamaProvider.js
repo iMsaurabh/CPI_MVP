@@ -39,6 +39,7 @@ class OllamaProvider extends BaseProvider {
     }
 
     async chat(messages, tools = [], options = {}) {
+
         const payload = {
             model: this.model,
             messages,

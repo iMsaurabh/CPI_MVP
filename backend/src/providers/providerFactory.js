@@ -11,13 +11,15 @@
 const OllamaProvider = require('./ollamaProvider');
 const ClaudeProvider = require('./claudeProvider');
 const OpenAIProvider = require('./openaiProvider');
+const GroqAIProvider = require('./groqProvider');
 
 // supported providers registry
 // adding a new provider requires only one new entry here
 const PROVIDERS = {
     ollama: OllamaProvider,
     claude: ClaudeProvider,
-    openai: OpenAIProvider
+    openai: OpenAIProvider,
+    groq: GroqAIProvider
 };
 
 // getProvider returns an instantiated provider ready to use.

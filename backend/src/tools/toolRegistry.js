@@ -1,10 +1,10 @@
 const monitoringTools = require('./monitoringTools');
 const deploymentTools = require('./deploymentTools');
 
-const allTools = {
+const allTools = [
     ...monitoringTools,
     ...deploymentTools
-};
+];
 
 const toolMap = {
     getMessageStatus: 'monitoringAgent',
