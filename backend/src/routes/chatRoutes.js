@@ -1,72 +1,34 @@
-// chatRoutes exposes the agent pipeline via HTTP endpoints.
-// It is the boundary between the HTTP world and the agent world.
-//
-// Responsibilities:
-// - Receive and validate incoming HTTP requests
-// - Extract provider selection and user message from request body
-// - Instantiate correct provider via providerFactory
-// - Delegate to orchestratorAgent
-// - Return structured HTTP response
-//
-// Routes never contain business logic.
-// They only handle HTTP concerns and delegate everything else.
-
 const express = require('express');
 const router = express.Router();
 const { getProvider, getSupportedProviders } = require('../providers/providerFactory');
 const orchestrator = require('../agents/orchestratorAgent');
+const responseFormatter = require('../utils/responseFormatter');
 
-// POST /api/chat
-// Main endpoint — sends user message through agent pipeline
-//
-// Request body:
-// {
-//   "message": "What is the status of MSG12345?",  // required
-//   "provider": "groq",                             // optional, defaults to env var
-//   "apiKey": null                                  // optional, for user provided keys
-// }
-//
-// Response:
-// {
-//   "success": true,
-//   "response": "Message MSG12345 is currently...",
-//   "agent": "monitoringAgent",
-//   "delegatedTo": ["monitoringAgent"]
-// }
-
-router.post('/chat', async (req, res) => {
+router.post('/chat', async (req, res, next) => {
     const { message, provider, apiKey } = req.body;
 
     // validate required fields
     if (!message || typeof message !== 'string' || message.trim() === '') {
-        return res.status(400).json({
-            success: false,
-            error: 'message is required and must be a non-empty string'
-        });
+        return responseFormatter.error(res, 'message is required and must be a non-empty string', 400);
     }
 
-    // instantiate provider from request
-    // if provider not specified, falls back to AI_PROVIDER env var
-    const providerInstance = getProvider(provider, {
-        apiKey: apiKey || undefined
-    });
+    // wrap in try/catch and pass errors to global error handler via next(err)
+    try {
+        const providerInstance = getProvider(provider, {
+            apiKey: apiKey || undefined
+        });
 
-    // delegate to orchestrator
-    const result = await orchestrator.run(providerInstance, message.trim());
+        const result = await orchestrator.run(providerInstance, message.trim());
+        return responseFormatter.success(res, result);
 
-    return res.status(200).json({
-        success: true,
-        ...result
-    });
+    } catch (err) {
+        // passing err to next() triggers the global errorHandler middleware
+        next(err);
+    }
 });
 
-// GET /api/providers
-// Returns list of supported AI providers
-// Used by frontend to populate provider selection dropdown
-
 router.get('/providers', (req, res) => {
-    return res.status(200).json({
-        success: true,
+    return responseFormatter.success(res, {
         providers: getSupportedProviders()
     });
 });
