@@ -24,11 +24,12 @@ const apiService = {
 
     // sendMessage sends a chat message to the orchestrator agent
     // provider and apiKey come from user settings
-    async sendMessage(message, provider, apiKey) {
+    async sendMessage(message, provider, apiKey, mockMode) {
         const response = await api.post('/api/chat', {
             message,
             provider,
-            apiKey: apiKey || null
+            apiKey: apiKey || null,
+            mockMode: mockMode !== undefined ? mockMode : true
         })
         return response.data
     },

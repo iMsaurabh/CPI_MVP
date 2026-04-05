@@ -1,4 +1,4 @@
-const { cpiService } = require('../config/apiConfig');
+const { getService } = require('../config/apiConfig');
 const { deploymentTools } = require('../tools/toolRegistry');
 const { getAgentLogger } = require('../utils/agentLogger');
 
@@ -7,11 +7,11 @@ const logger = getAgentLogger('deploymentAgent');
 const toolExecutors = {
     deployArtifact: async (params) => {
         logger.debug({ params }, 'Executing deployArtifact');
-        return await cpiService.deployArtifact(params.artifactId);
+        return await getService().deployArtifact(params.artifactId);
     },
     undeployArtifact: async (params) => {
         logger.debug({ params }, 'Executing undeployArtifact');
-        return await cpiService.undeployArtifact(params.artifactId);
+        return await getService().undeployArtifact(params.artifactId);
     }
 };
 

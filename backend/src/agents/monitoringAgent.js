@@ -1,4 +1,4 @@
-const { cpiService } = require('../config/apiConfig');
+const { getService } = require('../config/apiConfig');
 const { monitoringTools } = require('../tools/toolRegistry');
 const { getAgentLogger } = require('../utils/agentLogger');
 
@@ -7,11 +7,11 @@ const logger = getAgentLogger('monitoringAgent');
 const toolExecutors = {
     getMessageStatus: async (params) => {
         logger.debug({ params }, 'Executing getMessageStatus');
-        return await cpiService.getMessageStatus(params.messageId);
+        return await getService().getMessageStatus(params.messageId);
     },
     getMessageLog: async (params) => {
         logger.debug({ params }, 'Executing getMessageLog');
-        return await cpiService.getMessageLog(params.messageId);
+        return await getService().getMessageLog(params.messageId);
     }
 };
 

@@ -50,7 +50,8 @@ function useChat(settings) {
             const result = await apiService.sendMessage(
                 text.trim(),
                 settings?.provider || 'groq',
-                settings?.apiKey || null
+                settings?.apiKey || null,
+                settings?.mockMode
             )
 
             // add agent response to conversation

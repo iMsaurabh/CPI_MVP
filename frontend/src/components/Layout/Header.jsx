@@ -1,24 +1,26 @@
-// Header displays the app title and settings gear icon.
-// onSettingsClick toggles the settings panel open/closed.
-
-function Header({ onSettingsClick, provider }) {
+function Header({ onSettingsClick, provider, mockMode }) {
     return (
         <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
 
-            {/* app title */}
             <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">C</span>
                 </div>
                 <div>
                     <h1 className="text-sm font-semibold text-gray-800">CPI Agent</h1>
-                    <p className="text-xs text-gray-400">
-                        {provider ? `Provider: ${provider}` : 'SAP Cloud Platform Integration'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-400">
+                            {provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'Groq'}
+                        </p>
+                        {mockMode && (
+                            <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                                Mock
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* settings button */}
             <button
                 onClick={onSettingsClick}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
