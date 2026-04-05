@@ -4,3 +4,4 @@ docs/
 dist/
 coverage/
 src/config/testConfig.js
+logs/*.log
