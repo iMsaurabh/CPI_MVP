@@ -1,0 +1,35 @@
+# ── Stage 1: Build ───────────────────────────────────────────────────
+# Use Node.js to build the React application
+# This stage is discarded after build — not in final image
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# copy package files first for layer caching
+# npm install only re-runs if package.json changes
+COPY frontend/package*.json ./
+
+RUN npm install
+
+# copy source code and build
+COPY frontend/ .
+
+# vite build creates dist/ folder with static files
+RUN npm run build
+
+# ── Stage 2: Serve ───────────────────────────────────────────────────
+# Use Nginx to serve static files
+# Final image has no Node.js — smaller and more secure
+FROM nginx:alpine AS production
+
+# copy built static files from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# copy nginx configuration
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# nginx listens on port 80
+EXPOSE 80
+
+# nginx runs in foreground — required for Docker
+CMD ["nginx", "-g", "daemon off;"]

@@ -248,7 +248,7 @@ server runs.
 
 ---
 
-## Group 10 — Chat UI
+## Group 10 — Chat UI ✅ COMPLETE
 
 **Objective:** Build the core chat interface. User types a message,
 it is sent to `/api/chat`, response is displayed.
@@ -268,7 +268,7 @@ it is sent to `/api/chat`, response is displayed.
 
 ---
 
-## Group 11 — Settings Panel
+## Group 11 — Settings Panel ✅ COMPLETE
 
 **Objective:** Build the provider selection and configuration UI.
 User selects AI provider and optionally provides their own API key.

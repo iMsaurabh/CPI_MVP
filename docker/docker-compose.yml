@@ -1,4 +1,7 @@
+version: '3.8'
+
 services:
+
   backend:
     build:
       context: ..
@@ -12,8 +15,6 @@ services:
       - NODE_ENV=production
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
     volumes:
-      # mounts backend/logs on host to /app/logs in container
-      # logs persist across container stops and restarts
       - ../backend/logs:/app/logs
       - ../backend/src/config/loggingConfig.js:/app/src/config/loggingConfig.js
     restart: unless-stopped
@@ -23,3 +24,23 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: cpi-agent-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes: {}

@@ -8,7 +8,7 @@ import useChat from './hooks/useChat'
 import ChatWindow from './components/Chat/ChatWindow'
 import ChatInput from './components/Chat/ChatInput'
 import Header from './components/Layout/Header'
-import SettingsPanel from './components/Settings/settingsPanel'
+import SettingsPanel from './components/Settings/SettingsPanel'
 
 function App() {
   const { settings } = useSettings()
