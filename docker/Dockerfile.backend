@@ -1,0 +1,37 @@
+# ── Stage 1: Base ────────────────────────────────────────────────────
+# Use official Node.js LTS image on Alpine Linux
+# Alpine is a minimal Linux distribution — keeps image size small
+# LTS = Long Term Support — stable, production appropriate version
+FROM node:20-alpine AS base
+
+# Set working directory inside the container
+# All subsequent commands run from this path
+WORKDIR /app
+
+# ── Stage 2: Dependencies ─────────────────────────────────────────────
+# Copy package files first — before copying source code
+# Docker caches each layer. If package.json hasn't changed,
+# this layer is served from cache — faster rebuilds
+COPY backend/package*.json ./
+
+# Install production dependencies only
+# --omit=dev excludes nodemon and other dev tools from image
+RUN npm install --omit=dev
+
+# ── Stage 3: Application ──────────────────────────────────────────────
+# Copy application source code
+COPY backend/src ./src
+
+# Expose the port the app listens on
+# This is documentation — it does not publish the port
+# Actual port mapping happens in docker-compose.yml
+EXPOSE 3000
+
+# Health check — Docker will ping this endpoint periodically
+# If it fails consistently, Docker marks container as unhealthy
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Start the application
+# Use node directly — not nodemon — in production
+CMD ["node", "src/server.js"]

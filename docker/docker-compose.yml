@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: cpi-agent-backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../backend/.env
+    environment:
+      - NODE_ENV=production
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      # mounts backend/logs on host to /app/logs in container
+      # logs persist across container stops and restarts
+      - ../backend/logs:/app/logs
+      - ../backend/src/config/loggingConfig.js:/app/src/config/loggingConfig.js
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
