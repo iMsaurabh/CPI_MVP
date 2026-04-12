@@ -5,59 +5,48 @@
 
 const cpiMockService = {
 
-    // Retrieves the processing status of a CPI message by its message ID.
-    // In real CPI, this calls the Message Processing Logs OData API.
     async getMessageStatus(messageId) {
         return {
             messageId,
             status: 'COMPLETED',
-            processingStart: '2024-01-15T10:23:41Z',
-            processingEnd: '2024-01-15T10:23:45Z',
+            processingStart: '2026-04-05T10:23:41.000Z',
+            processingEnd: '2026-04-05T10:23:45.000Z',
             sender: 'MockSender',
-            receiver: 'MockReceiver'
+            receiver: 'MockReceiver',
+            integrationFlowName: 'MockIntegrationFlow',
+            correlationId: 'MOCK-CORR-001',
+            logLevel: 'INFO',
+            customStatus: 'COMPLETED'
         };
     },
 
-    // Retrieves the full processing log for a CPI message.
-    // In real CPI, this returns detailed step by step execution trace.
     async getMessageLog(messageId) {
         return {
             messageId,
-            log: [
-                {
-                    step: 'Sender Channel',
-                    status: 'COMPLETED',
-                    timestamp: '2024-01-15T10:23:41Z',
-                    details: 'Message received successfully'
-                },
-                {
-                    step: 'Groovy Script',
-                    status: 'COMPLETED',
-                    timestamp: '2024-01-15T10:23:43Z',
-                    details: 'Transformation applied'
-                },
-                {
-                    step: 'Receiver Channel',
-                    status: 'COMPLETED',
-                    timestamp: '2024-01-15T10:23:45Z',
-                    details: 'Message delivered to receiver'
-                }
+            status: 'COMPLETED',
+            logStart: '2026-04-05T10:23:41.000Z',
+            logEnd: '2026-04-05T10:23:45.000Z',
+            integrationFlowName: 'MockIntegrationFlow',
+            correlationId: 'MOCK-CORR-001',
+            logLevel: 'INFO',
+            customStatus: 'COMPLETED',
+            sender: 'MockSender',
+            receiver: 'MockReceiver',
+            adapterAttributes: [
+                { Name: 'MockAttribute', Value: 'MockValue' }
             ]
         };
     },
 
-    // Deploys an integration artifact (iFlow) on the CPI tenant.
-    // In real CPI, this triggers the deployment API and returns job status.
     async deployArtifact(artifactId) {
         return {
             artifactId,
             status: 'DEPLOYED',
             deployedAt: new Date().toISOString(),
-            message: `Artifact ${artifactId} deployed successfully`
+            message: `Artifact ${artifactId} deployment triggered successfully`
         };
     },
 
-    // Undeploys (stops) a running integration artifact on the CPI tenant.
     async undeployArtifact(artifactId) {
         return {
             artifactId,
@@ -66,7 +55,6 @@ const cpiMockService = {
             message: `Artifact ${artifactId} undeployed successfully`
         };
     }
-
 };
 
 module.exports = cpiMockService;
