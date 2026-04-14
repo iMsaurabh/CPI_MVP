@@ -4,38 +4,44 @@ const logger = require('./utils/logger');
 const requestLogger = require('./middleware/requestLogger');
 const errorHandler = require('./middleware/errorHandler');
 const chatRoutes = require('./routes/chatRoutes');
+const mcpClient = require('./mcp/mcpClient');
 
 const app = express();
 
-// middleware registered in order — order matters
-// 1. parse JSON bodies first so req.body is available to everything below
 app.use(express.json());
-
-// 2. log every request
 app.use(requestLogger);
 
-// health check endpoint
 app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         mock: process.env.USE_MOCK,
         aiProvider: process.env.AI_PROVIDER,
-        aiModel: process.env.AI_MODEL
+        aiModel: process.env.AI_MODEL,
+        mcpServers: mcpClient.getConnectedServers()
     });
 });
 
-// API routes
 app.use('/api', chatRoutes);
-
-// 3. error handler — MUST be last
-// Express identifies error handlers by four parameters
-// removing any parameter breaks error handling silently
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
-    logger.info(`Mock mode: ${process.env.USE_MOCK}`);
-    logger.info(`AI Provider: ${process.env.AI_PROVIDER}`);
-});
+async function start() {
+    try {
+        // initialize MCP client before accepting requests
+        // this connects to all registered MCP servers and discovers tools
+        await mcpClient.initialize();
+
+        app.listen(PORT, () => {
+            logger.info(`Server running on port ${PORT}`);
+            logger.info(`Mock mode: ${process.env.USE_MOCK}`);
+            logger.info(`AI Provider: ${process.env.AI_PROVIDER}`);
+        });
+
+    } catch (err) {
+        logger.error({ error: err.message }, 'Failed to start server');
+        process.exit(1);
+    }
+}
+
+start();

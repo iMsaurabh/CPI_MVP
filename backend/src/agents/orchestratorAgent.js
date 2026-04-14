@@ -1,27 +1,42 @@
-const { allTools, toolMap } = require('../tools/toolRegistry');
-const monitoringAgent = require('./monitoringAgent');
-const deploymentAgent = require('./deploymentAgent');
+// orchestratorAgent is the entry point for all user messages.
+// It now uses the MCP client to discover tools dynamically
+// and route tool calls to the correct MCP server.
+//
+// Key change from previous implementation:
+//   Before: hardcoded tool registry + specialist agents
+//   After: dynamic tool discovery via MCP client
+//
+// The orchestrator no longer knows about specific CPI operations.
+// It only knows how to:
+//   1. Get available tools from MCP client
+//   2. Send tools + message to LLM
+//   3. Execute tool calls via MCP client
+//   4. Return synthesized response
+
+const mcpClient = require('../mcp/mcpClient');
 const { getAgentLogger } = require('../utils/agentLogger');
 
 const logger = getAgentLogger('orchestratorAgent');
 
-const agentRegistry = {
-    monitoringAgent: monitoringAgent.run,
-    deploymentAgent: deploymentAgent.run
-};
+// maximum iterations of the ReAct loop before giving up
+const MAX_ITERATIONS = 5;
 
 async function run(provider, userMessage) {
     logger.info({ userMessage }, 'Orchestrator received message');
 
-    const intentMessages = [
+    // get all available tools from connected MCP servers
+    const tools = mcpClient.getTools();
+    logger.info({ toolCount: tools.length }, 'Tools loaded from MCP servers');
+
+    // conversation history maintained across ReAct loop iterations
+    const messages = [
         {
             role: 'system',
-            content: `You are an orchestrator for SAP Cloud Platform Integration.
-        You MUST use the provided tools to handle user requests.
-        NEVER answer CPI operation requests with text alone.
-        When a user asks about message status or logs, call getMessageStatus or getMessageLog.
-        When a user asks to deploy or undeploy, call deployArtifact or undeployArtifact.
-        Always call the appropriate tool first, then respond based on the result.`
+            content: `You are an intelligent assistant for SAP Cloud Platform Integration.
+        You have access to tools that can retrieve message status, logs and manage deployments.
+        Always use the available tools to answer questions about CPI operations.
+        Never make up or guess CPI data — always call the appropriate tool first.
+        If the user request is unclear, ask for clarification before calling tools.`
         },
         {
             role: 'user',
@@ -29,70 +44,82 @@ async function run(provider, userMessage) {
         }
     ];
 
-    const intentResponse = await provider.chat(intentMessages, allTools);
+    let iterations = 0;
+    const toolsUsed = [];
 
-    if (intentResponse.toolCalls.length === 0) {
-        logger.info('No tool calls detected — returning direct response');
-        return {
-            success: true,
-            response: intentResponse.content,
-            agent: 'orchestratorAgent',
-            delegatedTo: []
-        };
-    }
+    // ReAct loop — Reason + Act
+    // continues until LLM stops calling tools or max iterations reached
+    while (iterations < MAX_ITERATIONS) {
+        iterations++;
+        logger.debug({ iterations }, 'ReAct loop iteration');
 
-    logger.info({ toolCalls: intentResponse.toolCalls.map(tc => tc.name) }, 'Tool calls detected');
+        // send current conversation + tools to LLM
+        const response = await provider.chat(messages, tools);
 
-    const agentTasks = {};
-    for (const toolCall of intentResponse.toolCalls) {
-        const responsibleAgent = toolMap[toolCall.name];
-        if (!responsibleAgent) continue;
-        if (!agentTasks[responsibleAgent]) agentTasks[responsibleAgent] = [];
-        agentTasks[responsibleAgent].push(toolCall);
-    }
-
-    logger.info({ agentTasks: Object.keys(agentTasks) }, 'Delegating to specialist agents');
-
-    const agentResults = [];
-    for (const [agentName, toolCalls] of Object.entries(agentTasks)) {
-        const agentRun = agentRegistry[agentName];
-        if (!agentRun) continue;
-
-        const taskDescription = `${userMessage}
-      Focus on these operations: ${toolCalls.map(tc => tc.name).join(', ')}`;
-
-        const result = await agentRun(provider, taskDescription);
-        agentResults.push(result);
-    }
-
-    if (agentResults.length === 1) {
-        logger.info({ delegatedTo: Object.keys(agentTasks) }, 'Orchestrator completed');
-        return {
-            ...agentResults[0],
-            delegatedTo: Object.keys(agentTasks)
-        };
-    }
-
-    const synthesisMessages = [
-        {
-            role: 'system',
-            content: 'Combine the following operation results into a single clear response for the user.'
-        },
-        {
-            role: 'user',
-            content: agentResults.map(r => r.response).join('\n\n')
+        // no tool calls — LLM has final answer
+        if (response.toolCalls.length === 0) {
+            logger.info({ iterations, toolsUsed }, 'Orchestrator completed');
+            return {
+                success: true,
+                response: response.content,
+                agent: 'orchestratorAgent',
+                delegatedTo: [...new Set(toolsUsed)],
+                iterations
+            };
         }
-    ];
 
-    const synthesisResponse = await provider.chat(synthesisMessages, []);
+        logger.info(
+            { toolCalls: response.toolCalls.map(tc => tc.name) },
+            'Tool calls requested by LLM'
+        );
 
-    logger.info({ delegatedTo: Object.keys(agentTasks) }, 'Orchestrator synthesized response');
+        // execute each tool call via MCP client
+        const toolResults = [];
+
+        for (const toolCall of response.toolCalls) {
+            try {
+                logger.debug({ toolName: toolCall.name, params: toolCall.parameters }, 'Executing tool');
+
+                const result = await mcpClient.callTool(
+                    toolCall.name,
+                    toolCall.parameters
+                );
+
+                toolsUsed.push(toolCall.name);
+                toolResults.push({ tool: toolCall.name, result });
+
+                logger.info({ toolName: toolCall.name }, 'Tool executed successfully');
+
+            } catch (err) {
+                logger.error({ toolName: toolCall.name, error: err.message }, 'Tool execution failed');
+                toolResults.push({ tool: toolCall.name, error: err.message });
+            }
+        }
+
+        // add assistant message to conversation history
+        // must use raw provider response format for Groq/OpenAI compatibility
+        messages.push(response.raw.choices[0].message);
+
+        // add tool results to conversation history
+        response.raw.choices[0].message.tool_calls.forEach((tc, index) => {
+            messages.push({
+                role: 'tool',
+                tool_call_id: tc.id,
+                content: JSON.stringify(
+                    toolResults[index]?.result || toolResults[index]?.error
+                )
+            });
+        });
+    }
+
+    logger.warn({ MAX_ITERATIONS }, 'Max iterations reached');
 
     return {
-        success: true,
-        response: synthesisResponse.content,
+        success: false,
+        response: 'Maximum iterations reached without completing the task.',
         agent: 'orchestratorAgent',
-        delegatedTo: Object.keys(agentTasks)
+        delegatedTo: [...new Set(toolsUsed)],
+        iterations
     };
 }
 
