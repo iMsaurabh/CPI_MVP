@@ -1,0 +1,114 @@
+{
+    "tools": [
+        {
+            "name": "getMessageStatus",
+            "description": "Retrieves the current processing status of a CPI message by its message ID. Use this when the user asks about the status, result or outcome of a specific message or transaction.",
+            "endpoint": "/api/v1/MessageProcessingLogs('{messageId}')",
+            "method": "GET",
+            "parameters": [
+                {
+                    "name": "messageId",
+                    "type": "string",
+                    "required": true,
+                    "description": "The unique message ID of the CPI message",
+                    "location": "path"
+                }
+            ],
+            "requiresCsrf": false,
+            "mockResponse": {
+                "messageId": "MOCK-MSG-001",
+                "status": "COMPLETED",
+                "processingStart": "2026-04-06T10:23:41.000Z",
+                "processingEnd": "2026-04-06T10:23:45.000Z",
+                "sender": null,
+                "receiver": null,
+                "integrationFlowName": "MockIntegrationFlow",
+                "correlationId": "MOCK-CORR-001",
+                "logLevel": "INFO",
+                "customStatus": "COMPLETED"
+            }
+        },
+        {
+            "name": "getMessageLog",
+            "description": "Retrieves the detailed step by step processing log for a CPI message. Use this when the user asks for logs, execution trace or processing details.",
+            "endpoint": "/api/v1/MessageProcessingLogs('{messageId}')",
+            "method": "GET",
+            "parameters": [
+                {
+                    "name": "messageId",
+                    "type": "string",
+                    "required": true,
+                    "description": "The unique message ID of the CPI message",
+                    "location": "path"
+                }
+            ],
+            "queryParams": {
+                "$expand": "AdapterAttributes"
+            },
+            "requiresCsrf": false,
+            "mockResponse": {
+                "messageId": "MOCK-MSG-001",
+                "status": "COMPLETED",
+                "logStart": "2026-04-06T10:23:41.000Z",
+                "logEnd": "2026-04-06T10:23:45.000Z",
+                "integrationFlowName": "MockIntegrationFlow",
+                "correlationId": "MOCK-CORR-001",
+                "logLevel": "INFO",
+                "customStatus": "COMPLETED",
+                "sender": null,
+                "receiver": null,
+                "adapterAttributes": []
+            }
+        },
+        {
+            "name": "deployArtifact",
+            "description": "Deploys an integration artifact (iFlow) on the CPI tenant. Use this when the user asks to deploy, start, activate or publish an integration artifact.",
+            "endpoint": "/api/v1/DeployIntegrationDesigntimeArtifact",
+            "method": "POST",
+            "parameters": [
+                {
+                    "name": "artifactId",
+                    "type": "string",
+                    "required": true,
+                    "description": "The unique ID of the CPI integration artifact to deploy",
+                    "location": "query"
+                },
+                {
+                    "name": "version",
+                    "type": "string",
+                    "required": false,
+                    "description": "Version of the artifact to deploy, defaults to active",
+                    "location": "query",
+                    "default": "active"
+                }
+            ],
+            "requiresCsrf": true,
+            "mockResponse": {
+                "artifactId": "MOCK-ARTIFACT-001",
+                "status": "DEPLOYED",
+                "message": "Artifact deployment triggered successfully"
+            }
+        },
+        {
+            "name": "undeployArtifact",
+            "description": "Undeploys a running integration artifact on the CPI tenant. Use this when the user asks to undeploy, stop or deactivate an integration artifact.",
+            "endpoint": "/api/v1/IntegrationRuntimeArtifacts('{artifactId}')",
+            "method": "DELETE",
+            "parameters": [
+                {
+                    "name": "artifactId",
+                    "type": "string",
+                    "required": true,
+                    "description": "The unique ID of the CPI integration artifact to undeploy",
+                    "location": "path"
+                }
+            ],
+            "requiresCsrf": true,
+            "mockResponse": {
+                "artifactId": "MOCK-ARTIFACT-001",
+                "status": "UNDEPLOYED",
+                "message": "Artifact undeployed successfully"
+            }
+        }
+    ]
+}
