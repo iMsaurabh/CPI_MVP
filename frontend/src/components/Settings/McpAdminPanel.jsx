@@ -243,97 +243,84 @@ function ToolCard({ tool, serverUrl, onToolRemoved }) {
 
 // ServerCard — collapsible server with tools and add tool form
 function ServerCard({ server, tools, onRefresh }) {
-    const [expanded, setExpanded] = useState(false)
-    const [showAddForm, setShowAddForm] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  console.log(`ServerCard render: ${server.name}, expanded: ${expanded}, tools:`, tools)
+  const [showAddForm, setShowAddForm] = useState(false)
 
-    const serverUrl = server.name === 'cpi'
-        ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
-        : 'http://localhost:3001/mcp'
+  const serverUrl = server.name === 'cpi'
+    ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
+    : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
 
-    return (
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
 
-            {/* server header — click to expand/collapse */}
-            <button
-                onClick={() => setExpanded(prev => !prev)}
-                className="w-full bg-gray-50 px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors"
-            >
-                <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${server.connected ? 'bg-green-500' : 'bg-red-400'}`} />
-                    <span className="text-xs font-medium text-gray-700">{server.name}</span>
-                    <span className="text-xs text-gray-400">{server.toolCount} tools</span>
-                </div>
-                <span className="text-xs text-gray-400">
-                    {expanded ? '▲' : '▼'}
-                </span>
-            </button>
-
-            {/* expandable content */}
-            {expanded && (
-                <div className="p-2 space-y-1.5">
-
-                    {/* tool list */}
-<div className="p-2 space-y-1.5">
-  {server.name === 'scheduler' ? (
-    <p className="text-xs text-gray-400 italic px-1">
-      Scheduler tools are built-in and not configurable via UI.
-      Use chat to manage scheduled jobs.
-    </p>
-  ) : (
-    <>
-      {(serverTools[server.name] || []).length === 0 && (
-        <p className="text-xs text-gray-400 italic px-1">No tools configured</p>
-      )}
-      {(serverTools[server.name] || []).map(tool => (
-        <ToolCard
-          key={tool.name}
-          tool={tool}
-          serverUrl={
-            server.name === 'cpi'
-              ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
-              : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
-          }
-          onToolRemoved={fetchData}
-        />
-      ))}
-    </>
-  )}
-</div>
-
-{/* add tool form — only for manageable servers */}
-{server.name !== 'scheduler' && (
-  showAddForm === server.name ? (
-    <div className="px-2 pb-2">
-      <AddToolForm
-        serverUrl={
-          server.name === 'cpi'
-            ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
-            : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
-        }
-        onToolAdded={() => {
-          setShowAddForm(null)
-          fetchData()
-        }}
-        onCancel={() => setShowAddForm(null)}
-      />
-    </div>
-  ) : (
-    <div className="px-2 pb-2">
+      {/* server header */}
       <button
-        onClick={() => setShowAddForm(server.name)}
-        className="w-full text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-400 rounded-lg py-2 transition-colors"
+        onClick={() => setExpanded(prev => !prev)}
+        className="w-full bg-gray-50 px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors"
       >
-        + Add Tool
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${server.connected ? 'bg-green-500' : 'bg-red-400'}`} />
+          <span className="text-xs font-medium text-gray-700">{server.name}</span>
+          <span className="text-xs text-gray-400">{server.toolCount} tools</span>
+        </div>
+        <span className="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
       </button>
+
+      {expanded && (
+        <div>
+          {/* tool list */}
+          <div className="p-2 space-y-1.5">
+            {server.name === 'scheduler' ? (
+              <p className="text-xs text-gray-400 italic px-1">
+                Scheduler tools are built-in. Use chat to manage scheduled jobs.
+              </p>
+            ) : (
+              <>
+                {(tools || []).length === 0 && (
+                  <p className="text-xs text-gray-400 italic px-1">No tools configured</p>
+                )}
+                {(tools || []).map(tool => (
+                  <ToolCard
+                    key={tool.name}
+                    tool={tool}
+                    serverUrl={serverUrl}
+                    onToolRemoved={onRefresh}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+
+          {/* add tool button — only for manageable servers */}
+          {server.name !== 'scheduler' && (
+            showAddForm ? (
+              <div className="px-2 pb-2">
+                <AddToolForm
+                  serverUrl={serverUrl}
+                  onToolAdded={() => {
+                    setShowAddForm(false)
+                    onRefresh()
+                  }}
+                  onCancel={() => setShowAddForm(false)}
+                />
+              </div>
+            ) : (
+              <div className="px-2 pb-2">
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="w-full text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-400 rounded-lg py-2 transition-colors"
+                >
+                  + Add Tool
+                </button>
+              </div>
+            )
+          )}
+        </div>
+      )}
+
     </div>
   )
-)}
-
-                </div>
-            )}
-
-        </div>
-    )
 }
 
 function McpAdminPanel({ inline = false }) {
