@@ -23,11 +23,41 @@ const { executeTool } = require('./services/toolExecutor');
 const app = express();
 app.use(express.json());
 
+const cors = require('cors');
+
+// allow requests from frontend dev server and production
+app.use(cors({
+    origin: [
+        'http://localhost:5173',  // Vite dev server
+        'http://localhost:80',    // Docker frontend
+        'http://localhost'        // Docker frontend alternate
+    ],
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowedHeaders: ['Content-Type']
+}));
+
 // initialize MCP server instance
 // name and version identify this server to connected clients
 const mcpServer = new McpServer({
     name: 'cpi-mcp-server',
     version: '1.0.0'
+});
+
+// runtime mock mode state
+// separate from process.env so it can be changed without restart
+let runtimeMockMode = process.env.USE_MOCK === 'true';
+
+// export getter for use in toolExecutor
+function getMockMode() {
+    return runtimeMockMode;
+}
+
+// admin endpoint — set mock mode at runtime
+app.post('/admin/mock', (req, res) => {
+    const { mockMode } = req.body;
+    runtimeMockMode = mockMode === true || mockMode === 'true';
+    console.log(`[CPI MCP] Mock mode set to: ${runtimeMockMode}`);
+    res.json({ success: true, mockMode: runtimeMockMode });
 });
 
 // buildZodSchema converts our parameter definitions into a Zod schema
@@ -165,6 +195,22 @@ app.post('/admin/tools', (req, res) => {
     }
 });
 
+app.post('/admin/restart-tools', async (req, res) => {
+    try {
+        // re-read toolsConfig.json and update registered tools
+        // by restarting the entire server process
+        res.json({ success: true, message: 'MCP server restarting...' });
+
+        // graceful restart after response is sent
+        setTimeout(() => {
+            process.exit(0); // nodemon will restart the process automatically
+        }, 100);
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // admin endpoint — remove tool by name
 app.delete('/admin/tools/:name', (req, res) => {
     const { removeTool } = require('./tools/toolLoader');
@@ -173,6 +219,29 @@ app.delete('/admin/tools/:name', (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(404).json({ success: false, error: err.message });
+    }
+});
+
+// admin endpoint — direct tool execution
+// used by scheduler MCP server to execute tools on behalf of jobs
+// bypasses MCP protocol for server-to-server communication
+app.post('/admin/execute', async (req, res) => {
+    const { toolName, parameters } = req.body;
+
+    try {
+        const toolConfig = getToolConfig(toolName);
+        if (!toolConfig) {
+            return res.status(404).json({
+                success: false,
+                error: `Tool not found: ${toolName}`
+            });
+        }
+
+        const result = await executeTool(toolConfig, parameters || {});
+        res.json({ success: true, result });
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -185,3 +254,5 @@ app.listen(PORT, () => {
     console.log(`[MCP Server] Mock mode: ${process.env.USE_MOCK}`);
     console.log(`[MCP Server] SSE endpoint: http://localhost:${PORT}/mcp`);
 });
+
+module.exports = { getMockMode };

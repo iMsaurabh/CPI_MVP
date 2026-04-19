@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { useSettings } from '../../context/SettingsContext'
+import McpAdminPanel from './McpAdminPanel'
 
 function SettingsPanel({ onClose }) {
     const { settings, providers, providersLoading, updateSettings, resetSettings } = useSettings()
@@ -137,6 +138,14 @@ function SettingsPanel({ onClose }) {
                     <p className="text-xs text-gray-400 mt-1">
                         Mock mode returns fake CPI data for testing
                     </p>
+                </div>
+
+                {/* divider */}
+                <hr className="border-gray-200" />
+
+                {/* MCP Admin Panel */}
+                <div>
+                    <McpAdminPanel />
                 </div>
 
                 {/* divider */}

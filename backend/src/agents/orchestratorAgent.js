@@ -19,16 +19,21 @@ const { getAgentLogger } = require('../utils/agentLogger');
 const logger = getAgentLogger('orchestratorAgent');
 
 // maximum iterations of the ReAct loop before giving up
-const MAX_ITERATIONS = 5;
+const MAX_ITERATIONS = 8;
 
-async function run(provider, userMessage) {
-    logger.info({ userMessage }, 'Orchestrator received message');
+async function run(provider, userMessage, options = {}) {
+    logger.info({ userMessage }, 'Orchestrator received message')
 
-    // get all available tools from connected MCP servers
-    const tools = mcpClient.getTools();
-    logger.info({ toolCount: tools.length }, 'Tools loaded from MCP servers');
+    const tools = mcpClient.getTools()
+    logger.info({ toolCount: tools.length }, 'Tools loaded from MCP servers')
 
-    // conversation history maintained across ReAct loop iterations
+    // build conversation history from previous messages
+    // this gives LLM context of what was discussed before
+    const historyMessages = (options.history || []).map(m => ({
+        role: m.role,
+        content: m.content
+    }))
+
     const messages = [
         {
             role: 'system',
@@ -36,91 +41,83 @@ async function run(provider, userMessage) {
         You have access to tools that can retrieve message status, logs and manage deployments.
         Always use the available tools to answer questions about CPI operations.
         Never make up or guess CPI data — always call the appropriate tool first.
-        If the user request is unclear, ask for clarification before calling tools.`
+        If the user request is unclear, ask for clarification before calling tools.
+        When a tool returns results, always present the data clearly and completely to the user.
+        Never say you do not have access to results — if a tool was called, use its output in your response.
+        Format lists and structured data in a readable way.`
         },
-        {
-            role: 'user',
-            content: userMessage
-        }
-    ];
+        ...historyMessages,
+        { role: 'user', content: userMessage }
+    ]
 
-    let iterations = 0;
-    const toolsUsed = [];
+    let iterations = 0
+    const toolsUsed = []
 
-    // ReAct loop — Reason + Act
-    // continues until LLM stops calling tools or max iterations reached
     while (iterations < MAX_ITERATIONS) {
-        iterations++;
-        logger.debug({ iterations }, 'ReAct loop iteration');
+        iterations++
+        logger.debug({ iterations }, 'ReAct loop iteration')
 
-        // send current conversation + tools to LLM
-        const response = await provider.chat(messages, tools);
+        const response = await provider.chat(messages, tools)
 
-        // no tool calls — LLM has final answer
         if (response.toolCalls.length === 0) {
-            logger.info({ iterations, toolsUsed }, 'Orchestrator completed');
+            logger.info({ iterations, toolsUsed }, 'Orchestrator completed')
             return {
                 success: true,
                 response: response.content,
                 agent: 'orchestratorAgent',
                 delegatedTo: [...new Set(toolsUsed)],
                 iterations
-            };
-        }
-
-        logger.info(
-            { toolCalls: response.toolCalls.map(tc => tc.name) },
-            'Tool calls requested by LLM'
-        );
-
-        // execute each tool call via MCP client
-        const toolResults = [];
-
-        for (const toolCall of response.toolCalls) {
-            try {
-                logger.debug({ toolName: toolCall.name, params: toolCall.parameters }, 'Executing tool');
-
-                const result = await mcpClient.callTool(
-                    toolCall.name,
-                    toolCall.parameters
-                );
-
-                toolsUsed.push(toolCall.name);
-                toolResults.push({ tool: toolCall.name, result });
-
-                logger.info({ toolName: toolCall.name }, 'Tool executed successfully');
-
-            } catch (err) {
-                logger.error({ toolName: toolCall.name, error: err.message }, 'Tool execution failed');
-                toolResults.push({ tool: toolCall.name, error: err.message });
             }
         }
 
-        // add assistant message to conversation history
-        // must use raw provider response format for Groq/OpenAI compatibility
-        messages.push(response.raw.choices[0].message);
+        logger.info({ toolCalls: response.toolCalls.map(tc => tc.name) }, 'Tool calls requested by LLM')
 
-        // add tool results to conversation history
+        const toolResults = []
+
+        for (const toolCall of response.toolCalls) {
+            try {
+                logger.debug({ toolName: toolCall.name, params: toolCall.parameters }, 'Executing tool')
+                logger.info(`mockMode received from Chatroutes.js is ${options.mockMode} and comparison value is ${options.mockMode !== undefined}`)
+
+                const result = await mcpClient.callTool(toolCall.name, toolCall.parameters)
+
+                toolsUsed.push(toolCall.name)
+                toolResults.push({ tool: toolCall.name, result })
+                logger.info({ toolName: toolCall.name }, 'Tool executed successfully')
+
+            } catch (err) {
+                logger.error({ toolName: toolCall.name, error: err.message }, 'Tool execution failed')
+
+                // return friendly error — never expose raw API errors to user
+                return {
+                    success: false,
+                    response: `I encountered an issue while trying to execute that operation. Please try rephrasing your request or check that all required information was provided.`,
+                    agent: 'orchestratorAgent',
+                    delegatedTo: [...new Set(toolsUsed)],
+                    iterations,
+                    error: err.message // logged but not shown to user
+                }
+            }
+        }
+
+        messages.push(response.raw.choices[0].message)
         response.raw.choices[0].message.tool_calls.forEach((tc, index) => {
             messages.push({
                 role: 'tool',
                 tool_call_id: tc.id,
-                content: JSON.stringify(
-                    toolResults[index]?.result || toolResults[index]?.error
-                )
-            });
-        });
+                content: JSON.stringify(toolResults[index]?.result || toolResults[index]?.error)
+            })
+        })
     }
 
-    logger.warn({ MAX_ITERATIONS }, 'Max iterations reached');
-
+    logger.warn({ MAX_ITERATIONS }, 'Max iterations reached')
     return {
         success: false,
         response: 'Maximum iterations reached without completing the task.',
         agent: 'orchestratorAgent',
         delegatedTo: [...new Set(toolsUsed)],
         iterations
-    };
+    }
 }
 
 module.exports = { run };

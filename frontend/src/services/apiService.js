@@ -24,12 +24,17 @@ const apiService = {
 
     // sendMessage sends a chat message to the orchestrator agent
     // provider and apiKey come from user settings
-    async sendMessage(message, provider, apiKey, mockMode) {
+    async sendMessage(message, provider, apiKey, mockMode, history = []) {
         const response = await api.post('/api/chat', {
             message,
             provider,
             apiKey: apiKey || null,
-            mockMode: mockMode !== undefined ? mockMode : true
+            mockMode: mockMode !== undefined ? mockMode : true,
+            // send only last 10 messages to avoid token limit issues
+            history: history.slice(-5).map(m => ({
+                role: m.role === 'user' ? 'user' : 'assistant',
+                content: m.content
+            }))
         })
         return response.data
     },
@@ -46,6 +51,53 @@ const apiService = {
     async checkHealth() {
         const response = await api.get('/health')
         return response.data
+    },
+
+    // add these methods to the apiService object
+
+    // getMcpServers returns connected MCP servers and their tools
+    async getMcpServers() {
+        const response = await api.get('/api/mcp/servers');
+        return response.data;
+    },
+
+    // reloadMcpTools re-initializes MCP client after tool changes
+    async reloadMcpTools() {
+        const response = await api.post('/api/mcp/reload');
+        return response.data;
+    },
+
+    // getMcpTools returns all tools from a specific MCP server
+    // calls the MCP server's admin endpoint directly
+    async getMcpServerTools(serverUrl) {
+        const response = await axios.get(`${serverUrl.replace('/mcp', '')}/admin/tools`);
+        return response.data.tools;
+    },
+
+    // addMcpTool adds a new tool to a specific MCP server
+    async addMcpTool(serverUrl, toolConfig) {
+        const baseUrl = serverUrl.replace('/mcp', '');
+        const response = await axios.post(`${baseUrl}/admin/tools`, toolConfig);
+        // restart MCP server to pick up new tool
+        try {
+            await axios.post(`${baseUrl}/admin/restart-tools`);
+        } catch {
+            // ignore restart errors — server is restarting
+        }
+        return response.data;
+    },
+
+    // removeMcpTool removes a tool from a specific MCP server
+    async removeMcpTool(serverUrl, toolName) {
+        const baseUrl = serverUrl.replace('/mcp', '');
+        const response = await axios.delete(`${baseUrl}/admin/tools/${toolName}`);
+        // restart MCP server to pick up tool removal
+        try {
+            await axios.post(`${baseUrl}/admin/restart-tools`);
+        } catch {
+            // ignore restart errors — server is restarting
+        }
+        return response.data;
     }
 
 }

@@ -27,6 +27,23 @@ const toolServerMap = {};
 // sent to the LLM so it knows what is available
 let allTools = [];
 
+// setMockMode notifies all connected MCP servers of mock mode change
+// called when user toggles mock mode in UI
+async function setMockMode(mockMode) {
+    const axios = require('axios');
+
+    for (const serverConfig of mcpConfig.servers) {
+        if (!serverConfig.enabled) continue;
+        try {
+            const baseUrl = serverConfig.url.replace('/mcp', '');
+            await axios.post(`${baseUrl}/admin/mock`, { mockMode });
+            console.log(`[MCP Client] Set mock mode ${mockMode} on ${serverConfig.name}`);
+        } catch (err) {
+            console.warn(`[MCP Client] Failed to set mock mode on ${serverConfig.name}:`, err.message);
+        }
+    }
+}
+
 // connectToServer establishes MCP connection to a single server
 // returns connected client or null if connection fails
 async function connectToServer(serverConfig) {
@@ -97,7 +114,17 @@ async function discoverTools(serverName, client) {
 async function initialize() {
     console.log('[MCP Client] Initializing connections to MCP servers...');
 
-    // reset state on re-initialization
+    // close existing connections before reinitializing
+    for (const [name, client] of Object.entries(serverClients)) {
+        try {
+            await client.close();
+            console.log(`[MCP Client] Closed existing connection to ${name}`);
+        } catch (err) {
+            console.warn(`[MCP Client] Error closing connection to ${name}:`, err.message);
+        }
+    }
+
+    // reset state
     allTools = [];
     Object.keys(toolServerMap).forEach(k => delete toolServerMap[k]);
     Object.keys(serverClients).forEach(k => delete serverClients[k]);
@@ -178,5 +205,6 @@ module.exports = {
     initialize,
     getTools,
     callTool,
-    getConnectedServers
+    getConnectedServers,
+    setMockMode
 };

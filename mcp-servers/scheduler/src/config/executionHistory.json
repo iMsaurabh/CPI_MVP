@@ -1,0 +1,61 @@
+{
+  "executions": [
+    {
+      "id": "exec_1776498900139_x94yf",
+      "jobId": "job_1776498871117",
+      "jobName": "Deploy Artifact demo",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "FAILED",
+      "result": null,
+      "error": "Request failed with status code 404",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "startedAt": "2026-04-18T07:55:00.059Z",
+      "completedAt": "2026-04-18T07:55:00.138Z",
+      "duration": 79,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-18T07:55:00.139Z"
+    },
+    {
+      "id": "exec_1776500404078_d2byt",
+      "jobId": "job_1776500317744",
+      "jobName": "Deploy Artifact demo",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "e32ada0d-4de9-409c-6939-18f749aa8823",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 4,
+      "startedAt": "2026-04-18T08:20:00.049Z",
+      "completedAt": "2026-04-18T08:20:04.077Z",
+      "duration": 4028,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-18T08:20:04.078Z"
+    },
+    {
+      "id": "exec_1776534184761_9tyie",
+      "jobId": "job_1776534117707",
+      "jobName": "deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "eaa34adf-79b8-46fe-40c9-6948571e3170",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 2,
+      "startedAt": "2026-04-18T17:43:00.036Z",
+      "completedAt": "2026-04-18T17:43:04.759Z",
+      "duration": 4723,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-18T17:43:04.761Z"
+    }
+  ]
+}

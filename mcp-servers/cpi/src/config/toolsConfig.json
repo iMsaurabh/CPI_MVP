@@ -71,7 +71,9 @@
                     "type": "string",
                     "required": true,
                     "description": "The unique ID of the CPI integration artifact to deploy",
-                    "location": "query"
+                    "location": "query",
+                    "queryParamName": "Id",
+                    "quoted": true
                 },
                 {
                     "name": "version",
@@ -79,6 +81,8 @@
                     "required": false,
                     "description": "Version of the artifact to deploy, defaults to active",
                     "location": "query",
+                    "queryParamName": "Version",
+                    "quoted": true,
                     "default": "active"
                 }
             ],
@@ -108,6 +112,18 @@
                 "artifactId": "MOCK-ARTIFACT-001",
                 "status": "UNDEPLOYED",
                 "message": "Artifact undeployed successfully"
+            }
+        },
+        {
+            "name": "listArtifacts",
+            "description": "Lists all deployed integration artifacts on the CPI tenant. Use when user asks to show, list or get all deployed artifacts.",
+            "endpoint": "/api/v1/IntegrationRuntimeArtifacts",
+            "method": "GET",
+            "requiresCsrf": false,
+            "parameters": [],
+            "mockResponse": {
+                "status": "SUCCESS",
+                "message": "listArtifacts executed successfully"
             }
         }
     ]

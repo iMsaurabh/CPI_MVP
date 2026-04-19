@@ -51,7 +51,8 @@ function useChat(settings) {
                 text.trim(),
                 settings?.provider || 'groq',
                 settings?.apiKey || null,
-                settings?.mockMode
+                settings?.mockMode,
+                messages  // send full history
             )
 
             // add agent response to conversation
@@ -84,7 +85,7 @@ function useChat(settings) {
         } finally {
             setLoading(false)
         }
-    }, [settings])
+    }, [settings, messages])
 
     // clearMessages resets the conversation
     const clearMessages = useCallback(() => {
