@@ -139,6 +139,110 @@
       "lastRun": "2026-04-18T17:43:04.763Z",
       "nextRun": null,
       "lastStatus": "SUCCESS"
+    },
+    {
+      "id": "job_1776582517870",
+      "name": "Deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "schedule": {
+        "frequency": "once",
+        "days": [],
+        "time": "07:10",
+        "timezone": "UTC",
+        "cron": "10 7 * * *"
+      },
+      "retry": {
+        "enabled": false,
+        "maxRetries": 2,
+        "delayMinutes": 5,
+        "timeoutSeconds": 30
+      },
+      "enabled": false,
+      "createdAt": "2026-04-19T07:08:37.870Z",
+      "lastRun": "2026-04-19T07:10:06.856Z",
+      "nextRun": null,
+      "lastStatus": "SUCCESS"
+    },
+    {
+      "id": "job_1776582893124",
+      "name": "Deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "schedule": {
+        "frequency": "once",
+        "days": [],
+        "time": "07:16",
+        "timezone": "UTC",
+        "cron": "16 7 * * *"
+      },
+      "retry": {
+        "enabled": true,
+        "maxRetries": 2,
+        "delayMinutes": 5,
+        "timeoutSeconds": 30
+      },
+      "enabled": false,
+      "createdAt": "2026-04-19T07:14:53.124Z",
+      "lastRun": "2026-04-19T07:16:03.978Z",
+      "nextRun": null,
+      "lastStatus": "SUCCESS"
+    },
+    {
+      "id": "job_1776582893160",
+      "name": "Deploy Demo_CheckAdapters artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "Demo_CheckAdapters"
+      },
+      "schedule": {
+        "frequency": "once",
+        "days": [],
+        "time": "07:16",
+        "timezone": "UTC",
+        "cron": "16 7 * * *"
+      },
+      "retry": {
+        "enabled": true,
+        "maxRetries": 2,
+        "delayMinutes": 5,
+        "timeoutSeconds": 30
+      },
+      "enabled": false,
+      "createdAt": "2026-04-19T07:14:53.160Z",
+      "lastRun": "2026-04-19T07:16:03.941Z",
+      "nextRun": null,
+      "lastStatus": "SUCCESS"
+    },
+    {
+      "id": "job_1776583390754",
+      "name": "deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "schedule": {
+        "frequency": "once",
+        "days": [],
+        "time": "07:24",
+        "timezone": "UTC",
+        "cron": "24 7 * * *"
+      },
+      "retry": {
+        "enabled": false,
+        "maxRetries": 2,
+        "delayMinutes": 5,
+        "timeoutSeconds": 30
+      },
+      "enabled": false,
+      "createdAt": "2026-04-19T07:23:10.754Z",
+      "lastRun": "2026-04-19T07:24:04.916Z",
+      "nextRun": null,
+      "lastStatus": "SUCCESS"
     }
   ]
 }

@@ -56,6 +56,82 @@
       "duration": 4723,
       "nextRetryAt": null,
       "createdAt": "2026-04-18T17:43:04.761Z"
+    },
+    {
+      "id": "exec_1776582606850_yi4bq",
+      "jobId": "job_1776582517870",
+      "jobName": "Deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "900ccf3b-95dd-42bc-509f-e5d106d47060",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 1,
+      "startedAt": "2026-04-19T07:10:00.077Z",
+      "completedAt": "2026-04-19T07:10:06.849Z",
+      "duration": 6771,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T07:10:06.850Z"
+    },
+    {
+      "id": "exec_1776582963933_a61yu",
+      "jobId": "job_1776582893160",
+      "jobName": "Deploy Demo_CheckAdapters artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "Demo_CheckAdapters"
+      },
+      "status": "SUCCESS",
+      "result": "7b12003b-3ea1-4573-5f87-944861089f1a",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 3,
+      "startedAt": "2026-04-19T07:16:00.169Z",
+      "completedAt": "2026-04-19T07:16:03.932Z",
+      "duration": 3763,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T07:16:03.933Z"
+    },
+    {
+      "id": "exec_1776582963971_djh32",
+      "jobId": "job_1776582893124",
+      "jobName": "Deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "89193c69-eca4-458c-5410-629dc0a9ea38",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 3,
+      "startedAt": "2026-04-19T07:16:00.109Z",
+      "completedAt": "2026-04-19T07:16:03.971Z",
+      "duration": 3862,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T07:16:03.971Z"
+    },
+    {
+      "id": "exec_1776583444908_jf9aj",
+      "jobId": "job_1776583390754",
+      "jobName": "deploy demo artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "b0903705-f8a1-4a65-4e64-69bdf5753196",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 1,
+      "startedAt": "2026-04-19T07:24:00.087Z",
+      "completedAt": "2026-04-19T07:24:04.907Z",
+      "duration": 4820,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T07:24:04.908Z"
     }
   ]
 }
