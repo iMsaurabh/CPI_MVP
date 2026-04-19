@@ -4,58 +4,47 @@ import useChat from './hooks/useChat'
 import ChatWindow from './components/Chat/ChatWindow'
 import ChatInput from './components/Chat/ChatInput'
 import Header from './components/Layout/Header'
-import SettingsPanel from './components/Settings/SettingsPanel'
 import ToastStack from './components/Notifications/ToastStack'
 import { NotificationPanel } from './components/Notifications/NotificationCenter'
+import Sidebar from './components/Layout/Sidebar'
 
 function App() {
   const { settings } = useSettings()
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const { messages, loading, sendMessage, clearMessages } = useChat(settings)
 
-  // only one panel open at a time
-  function openSettings() {
-    setNotificationsOpen(false)
-    setSettingsOpen(prev => !prev)
-  }
-
-  function openNotifications() {
-    setSettingsOpen(false)
-    setNotificationsOpen(prev => !prev)
-  }
-
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
 
+      {/* header */}
       <Header
-        onSettingsClick={openSettings}
-        onNotificationsClick={openNotifications}
+        onNotificationsClick={() => setNotificationsOpen(prev => !prev)}
         provider={settings.provider}
         mockMode={settings.mockMode}
       />
 
+      {/* main content */}
       <div className="flex-1 flex overflow-hidden">
 
         {/* chat area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <ChatWindow messages={messages} loading={loading} />
           <ChatInput onSend={sendMessage} loading={loading} />
         </div>
 
-        {/* settings panel */}
-        {settingsOpen && (
-          <SettingsPanel onClose={() => setSettingsOpen(false)} />
-        )}
+        {/* persistent sidebar */}
+        <Sidebar onClearChat={clearMessages} />
 
-        {/* notification panel */}
+        {/* notification panel — slides over sidebar */}
         {notificationsOpen && (
-          <NotificationPanel onClose={() => setNotificationsOpen(false)} />
+          <div className="absolute right-0 top-12 bottom-0 w-80 z-40">
+            <NotificationPanel onClose={() => setNotificationsOpen(false)} />
+          </div>
         )}
 
       </div>
 
-      {/* toast stack — fixed position, always rendered */}
+      {/* toast stack */}
       <ToastStack />
 
     </div>

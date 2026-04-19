@@ -132,6 +132,88 @@
       "duration": 4820,
       "nextRetryAt": null,
       "createdAt": "2026-04-19T07:24:04.908Z"
+    },
+    {
+      "id": "exec_1776585860647_p7fdw",
+      "jobId": "job_1776584326341",
+      "jobName": "Deploy123",
+      "tool": "undeployArtifact",
+      "parameters": {
+        "artifactId": "Demo_CheckAdapters"
+      },
+      "status": "SUCCESS",
+      "result": {
+        "status": "success",
+        "message": "undeployArtifact executed successfully"
+      },
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 3,
+      "startedAt": "2026-04-19T08:04:06.513Z",
+      "completedAt": "2026-04-19T08:04:20.646Z",
+      "duration": 14133,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T08:04:20.647Z"
+    },
+    {
+      "id": "exec_1776585965025_e3dl3",
+      "jobId": "job_1776585953740",
+      "jobName": "Deploy Demo Artifact",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "6e07a27c-9d09-4c52-7b12-f3cffbae0480",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 1,
+      "startedAt": "2026-04-19T08:06:00.083Z",
+      "completedAt": "2026-04-19T08:06:05.024Z",
+      "duration": 4941,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T08:06:05.025Z"
+    },
+    {
+      "id": "exec_1776586502997_vcnib",
+      "jobId": "job_1776586039758",
+      "jobName": "test demo deploy",
+      "tool": "undeployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": {
+        "status": "success",
+        "message": "undeployArtifact executed successfully"
+      },
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 3,
+      "startedAt": "2026-04-19T08:15:00.080Z",
+      "completedAt": "2026-04-19T08:15:02.997Z",
+      "duration": 2917,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T08:15:02.997Z"
+    },
+    {
+      "id": "exec_1776597307194_fon1l",
+      "jobId": "job_1776597159364",
+      "jobName": "deploy demo 2",
+      "tool": "deployArtifact",
+      "parameters": {
+        "artifactId": "demo"
+      },
+      "status": "SUCCESS",
+      "result": "314069a2-0670-4191-55cd-db7216223544",
+      "error": null,
+      "attempt": 1,
+      "maxAttempts": 3,
+      "startedAt": "2026-04-19T11:15:00.081Z",
+      "completedAt": "2026-04-19T11:15:07.193Z",
+      "duration": 7111,
+      "nextRetryAt": null,
+      "createdAt": "2026-04-19T11:15:07.194Z"
     }
   ]
 }

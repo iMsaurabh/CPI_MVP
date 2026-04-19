@@ -164,6 +164,78 @@ app.get('/admin/executions', (req, res) => {
     res.json({ executions: jobStore.getAllExecutions() });
 });
 
+// admin — toggle job enabled/disabled
+app.post('/admin/jobs/:jobId/toggle', (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const job = jobStore.getJobById(req.params.jobId);
+    if (!job) return res.status(404).json({ success: false, error: 'Job not found' });
+
+    jobStore.updateJob(req.params.jobId, { enabled });
+
+    if (enabled) {
+      jobScheduler.startJob({ ...job, enabled: true });
+    } else {
+      jobScheduler.stopJob(req.params.jobId);
+    }
+
+    res.json({ success: true, enabled });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// admin — delete a job
+app.delete('/admin/jobs/:jobId', (req, res) => {
+  try {
+    const job = jobStore.getJobById(req.params.jobId);
+    if (!job) return res.status(404).json({ success: false, error: 'Job not found' });
+
+    jobScheduler.stopJob(req.params.jobId);
+    jobStore.deleteJob(req.params.jobId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// admin — run job immediately
+app.post('/admin/jobs/:jobId/run', async (req, res) => {
+  try {
+    const { keepSchedule } = req.body;
+    const job = jobStore.getJobById(req.params.jobId);
+    if (!job) return res.status(404).json({ success: false, error: 'Job not found' });
+
+    // run async — respond immediately
+    jobScheduler.runJobNow(req.params.jobId, keepSchedule !== false)
+      .catch(err => console.error('[Admin] runJobNow error:', err.message));
+
+    res.json({ success: true, message: `Job "${job.name}" triggered` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// admin — create job directly from UI
+app.post('/admin/jobs', (req, res) => {
+  try {
+    const jobConfig = req.body;
+
+    // build cron expression from schedule config
+    const cron = jobScheduler.buildCronExpression(jobConfig.schedule);
+    jobConfig.schedule.cron = cron;
+    jobConfig.schedule.timezone = 'UTC';
+
+    const job = jobStore.createJob(jobConfig);
+    jobScheduler.startJob(job);
+
+    res.status(201).json({ success: true, job });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // initialize and start
 registerTools();
 jobScheduler.initialize();

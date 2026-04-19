@@ -273,39 +273,61 @@ function ServerCard({ server, tools, onRefresh }) {
                 <div className="p-2 space-y-1.5">
 
                     {/* tool list */}
-                    {(tools || []).length === 0 && (
-                        <p className="text-xs text-gray-400 italic px-1">No tools configured</p>
-                    )}
-                    {(tools || []).map(tool => (
-                        <ToolCard
-                            key={tool.name}
-                            tool={tool}
-                            serverUrl={serverUrl}
-                            onToolRemoved={() => {
-                                setShowAddForm(false)
-                                onRefresh()
-                            }}
-                        />
-                    ))}
+<div className="p-2 space-y-1.5">
+  {server.name === 'scheduler' ? (
+    <p className="text-xs text-gray-400 italic px-1">
+      Scheduler tools are built-in and not configurable via UI.
+      Use chat to manage scheduled jobs.
+    </p>
+  ) : (
+    <>
+      {(serverTools[server.name] || []).length === 0 && (
+        <p className="text-xs text-gray-400 italic px-1">No tools configured</p>
+      )}
+      {(serverTools[server.name] || []).map(tool => (
+        <ToolCard
+          key={tool.name}
+          tool={tool}
+          serverUrl={
+            server.name === 'cpi'
+              ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
+              : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+          }
+          onToolRemoved={fetchData}
+        />
+      ))}
+    </>
+  )}
+</div>
 
-                    {/* add tool form or button */}
-                    {showAddForm ? (
-                        <AddToolForm
-                            serverUrl={serverUrl}
-                            onToolAdded={() => {
-                                setShowAddForm(false)
-                                onRefresh()
-                            }}
-                            onCancel={() => setShowAddForm(false)}
-                        />
-                    ) : (
-                        <button
-                            onClick={() => setShowAddForm(true)}
-                            className="w-full mt-1 text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-400 rounded-lg py-2 transition-colors"
-                        >
-                            + Add Tool
-                        </button>
-                    )}
+{/* add tool form — only for manageable servers */}
+{server.name !== 'scheduler' && (
+  showAddForm === server.name ? (
+    <div className="px-2 pb-2">
+      <AddToolForm
+        serverUrl={
+          server.name === 'cpi'
+            ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
+            : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        }
+        onToolAdded={() => {
+          setShowAddForm(null)
+          fetchData()
+        }}
+        onCancel={() => setShowAddForm(null)}
+      />
+    </div>
+  ) : (
+    <div className="px-2 pb-2">
+      <button
+        onClick={() => setShowAddForm(server.name)}
+        className="w-full text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-400 rounded-lg py-2 transition-colors"
+      >
+        + Add Tool
+      </button>
+    </div>
+  )
+)}
 
                 </div>
             )}
@@ -314,113 +336,124 @@ function ServerCard({ server, tools, onRefresh }) {
     )
 }
 
-function McpAdminPanel() {
-    const [servers, setServers] = useState([])
-    const [serverTools, setServerTools] = useState({})
-    const [loading, setLoading] = useState(true)
-    const [expanded, setExpanded] = useState(false) // panel collapsed by default
-    const [reloading, setReloading] = useState(false)
+function McpAdminPanel({ inline = false }) {
+  const [servers, setServers] = useState([])
+  const [serverTools, setServerTools] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(false)
+  const [reloading, setReloading] = useState(false)
 
-    useEffect(() => {
-        if (expanded) fetchData()
-    }, [expanded])
+  async function fetchData() {
+  setLoading(true)
+  try {
+    const data = await apiService.getMcpServers()
 
-    async function fetchData() {
-        setLoading(true)
-        try {
-            const data = await apiService.getMcpServers()
-            setServers(data.servers || [])
+    setServers(data.servers || [])
 
-            const toolsMap = {}
-            for (const server of (data.servers || [])) {
-                try {
-                    const mcpUrl = server.name === 'cpi'
-                        ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
-                        : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
-                    const tools = await apiService.getMcpServerTools(mcpUrl)
-                    toolsMap[server.name] = tools
-                } catch (err) {
-                    console.error(`Failed to fetch tools for ${server.name}:`, err)
-                    toolsMap[server.name] = []
-                }
-            }
-            setServerTools(toolsMap)
-        } catch (err) {
-            console.error('Failed to fetch MCP data:', err)
-        } finally {
-            setLoading(false)
+    const toolsMap = {}
+    for (const server of (data.servers || [])) {
+      try {
+        // scheduler tools are hardcoded — no admin/tools endpoint
+        // only fetch tools from servers that support dynamic tool management
+        if (server.name === 'scheduler') {
+          toolsMap[server.name] = [] // tools not manageable via UI
+          continue
         }
+
+        const mcpUrl = server.name === 'cpi'
+          ? (import.meta.env.VITE_CPI_MCP_URL || 'http://localhost:3001/mcp')
+          : (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+
+        const tools = await apiService.getMcpServerTools(mcpUrl)
+        toolsMap[server.name] = tools
+      } catch (err) {
+        console.error(`Failed to fetch tools for ${server.name}:`, err)
+        toolsMap[server.name] = []
+      }
     }
+    setServerTools(toolsMap)
+  } catch (err) {
+    console.error('Failed to fetch MCP data:', err)
+  } finally {
+    setLoading(false)
+  }
+}
 
-    async function handleReload() {
-        setReloading(true)
-        try {
-            await apiService.reloadMcpTools()
-            await fetchData()
-        } finally {
-            setReloading(false)
-        }
+  // handleReload MUST be defined before content block
+  async function handleReload() {
+    setReloading(true)
+    try {
+      await apiService.reloadMcpTools()
+      await fetchData()
+    } finally {
+      setReloading(false)
     }
+  }
 
-    return (
-        <div>
+  useEffect(() => {
+    if (inline || expanded) fetchData()
+  }, [inline, expanded])
 
-            {/* panel header — click to expand/collapse entire panel */}
-            <button
-                onClick={() => setExpanded(prev => !prev)}
-                className="w-full flex items-center justify-between py-1 group"
-            >
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer">
-                    MCP Servers
-                </label>
-                <span className="text-xs text-gray-400 group-hover:text-gray-600">
-                    {expanded ? '▲ collapse' : '▼ expand'}
-                </span>
-            </button>
+  // content block uses handleReload — safe because it is defined above
+const content = (
+  <div className="space-y-2">
 
-            {/* expandable content */}
-            {expanded && (
-                <div className="mt-2 space-y-2">
+    {/* reload button */}
+    <div className="flex justify-end">
+      <button
+        onClick={handleReload}
+        disabled={reloading}
+        className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
+      >
+        {reloading ? 'Reloading...' : '↺ Reload'}
+      </button>
+    </div>
 
-                    {/* reload button */}
-                    <div className="flex justify-end">
-                        <button
-                            onClick={handleReload}
-                            disabled={reloading}
-                            className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
-                        >
-                            {reloading ? 'Reloading...' : '↺ Reload all'}
-                        </button>
-                    </div>
+    {/* loading state */}
+    {loading && (
+      <div className="space-y-2">
+        {[1, 2].map(i => (
+          <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />
+        ))}
+      </div>
+    )}
 
-                    {/* loading state */}
-                    {loading && (
-                        <div className="space-y-2">
-                            {[1, 2].map(i => (
-                                <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />
-                            ))}
-                        </div>
-                    )}
+    {/* empty state */}
+    {!loading && servers.length === 0 && (
+      <p className="text-xs text-gray-400 italic">No MCP servers connected</p>
+    )}
 
-                    {/* server list */}
-                    {!loading && servers.length === 0 && (
-                        <p className="text-xs text-gray-400 italic">No MCP servers connected</p>
-                    )}
+    {/* server list */}
+    {!loading && servers.map(server => (
+      <ServerCard
+        key={server.name}
+        server={server}
+        tools={serverTools[server.name]}
+        onRefresh={fetchData}
+      />
+    ))}
 
-                    {!loading && servers.map(server => (
-                        <ServerCard
-                            key={server.name}
-                            server={server}
-                            tools={serverTools[server.name]}
-                            onRefresh={fetchData}
-                        />
-                    ))}
+  </div>
+)
 
-                </div>
-            )}
+  if (inline) return content
 
-        </div>
-    )
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(prev => !prev)}
+        className="w-full flex items-center justify-between py-1 group"
+      >
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer">
+          MCP Servers
+        </label>
+        <span className="text-xs text-gray-400 group-hover:text-gray-600">
+          {expanded ? '▲ collapse' : '▼ expand'}
+        </span>
+      </button>
+      {expanded && content}
+    </div>
+  )
 }
 
 export default McpAdminPanel

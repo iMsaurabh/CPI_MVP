@@ -98,6 +98,56 @@ const apiService = {
             // ignore restart errors — server is restarting
         }
         return response.data;
+    },
+
+    // ─── Jobs API ────────────────────────────────────────────────────────
+
+    // getAllJobs fetches all scheduled jobs from scheduler MCP server
+    async getAllJobs() {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.get(`${baseUrl}/admin/jobs`)
+      return response.data.jobs
+    },
+
+    // getJobHistory fetches execution history for a specific job
+    async getJobHistory(jobId) {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.get(`${baseUrl}/admin/jobs/${jobId}/history`)
+      return response.data.executions
+    },
+
+    // toggleJob enables or disables a job
+    async toggleJob(jobId, enabled) {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.post(`${baseUrl}/admin/jobs/${jobId}/toggle`, { enabled })
+      return response.data
+    },
+
+    // deleteJob removes a job permanently
+    async deleteJob(jobId) {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.delete(`${baseUrl}/admin/jobs/${jobId}`)
+      return response.data
+    },
+
+    // runJobNow triggers immediate execution of a job
+    async runJobNow(jobId, keepSchedule) {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.post(`${baseUrl}/admin/jobs/${jobId}/run`, { keepSchedule })
+      return response.data
+    },
+
+    // createJobFromUI creates a job directly from UI without chat
+    async createJobFromUI(jobConfig) {
+      const baseUrl = (import.meta.env.VITE_SCHEDULER_MCP_URL || 'http://localhost:3002/mcp')
+        .replace('/mcp', '')
+      const response = await axios.post(`${baseUrl}/admin/jobs`, jobConfig)
+      return response.data
     }
 
 }
