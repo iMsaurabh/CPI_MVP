@@ -125,6 +125,135 @@
                 "status": "SUCCESS",
                 "message": "listArtifacts executed successfully"
             }
+        },
+        {
+            "name": "getIFlowConfigurations",
+            "description": "Get all externalized configuration parameters (key/value pairs) of an integration flow by its ID and version. Use this when the user wants to see, inspect, or list the configuration parameters of an iFlow.",
+            "method": "GET",
+            "endpoint": "/api/v1/IntegrationDesigntimeArtifacts(Id='{Id}',Version='{Version}')/Configurations",
+            "requiresCsrf": false,
+            "parameters": [
+                {
+                    "name": "Id",
+                    "type": "string",
+                    "location": "path",
+                    "required": true,
+                    "description": "The ID of the integration flow artifact"
+                },
+                {
+                    "name": "Version",
+                    "type": "string",
+                    "location": "path",
+                    "required": false,
+                    "default": "active",
+                    "description": "Version of the artifact. Use 'active' for the current deployed version."
+                },
+                {
+                    "name": "filter",
+                    "type": "string",
+                    "location": "query",
+                    "queryParamName": "$filter",
+                    "required": false,
+                    "description": "Optional OData filter e.g. substringof('Receiver_',ParameterKey) eq true"
+                }
+            ],
+            "queryParams": {
+                "$format": "json"
+            },
+            "mockResponse": {
+                "configurations": [
+                    {
+                        "ParameterKey": "Receiver_Address",
+                        "ParameterValue": "http://mock-receiver",
+                        "DataType": "xsd:string",
+                        "Description": "Receiver endpoint address"
+                    },
+                    {
+                        "ParameterKey": "Sender_Path",
+                        "ParameterValue": "/mock-sender",
+                        "DataType": "xsd:string",
+                        "Description": "Sender path"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "getIFlowConfigurationCount",
+            "description": "Get the total number of configuration parameters for an integration flow. Use this when the user asks how many parameters an iFlow has configured.",
+            "method": "GET",
+            "endpoint": "/api/v1/IntegrationDesigntimeArtifacts(Id='{Id}',Version='{Version}')/Configurations/$count",
+            "requiresCsrf": false,
+            "parameters": [
+                {
+                    "name": "Id",
+                    "type": "string",
+                    "location": "path",
+                    "required": true,
+                    "description": "The ID of the integration flow artifact"
+                },
+                {
+                    "name": "Version",
+                    "type": "string",
+                    "location": "path",
+                    "required": false,
+                    "default": "active",
+                    "description": "Version of the artifact. Use 'active' for the current deployed version."
+                }
+            ],
+            "queryParams": {},
+            "mockResponse": {
+                "count": 2
+            }
+        },
+        {
+            "name": "updateIFlowConfiguration",
+            "description": "Update the value of a specific configuration parameter of an integration flow. Use this when the user wants to change or set a config parameter value. This is a write operation — always confirm the artifact ID, parameter key, and new value with the user before executing. Do not deploy the artifact. In response do mention that user needs to deploy artifact via separate request unless mentioned explicitely.",
+            "method": "PUT",
+            "endpoint": "/api/v1/IntegrationDesigntimeArtifacts(Id='{Id}',Version='{Version}')/$links/Configurations('{ParameterKey}')",
+            "requiresCsrf": true,
+            "parameters": [
+                {
+                    "name": "Id",
+                    "type": "string",
+                    "location": "path",
+                    "required": true,
+                    "description": "The ID of the integration flow artifact"
+                },
+                {
+                    "name": "Version",
+                    "type": "string",
+                    "location": "path",
+                    "required": false,
+                    "default": "active",
+                    "description": "Version of the artifact. Use 'active' for current deployed version."
+                },
+                {
+                    "name": "ParameterKey",
+                    "type": "string",
+                    "location": "path",
+                    "required": true,
+                    "description": "The key of the configuration parameter to update e.g. Receiver_Address"
+                },
+                {
+                    "name": "ParameterValue",
+                    "type": "string",
+                    "location": "body",
+                    "required": true,
+                    "description": "The new value to set for the parameter"
+                },
+                {
+                    "name": "DataType",
+                    "type": "string",
+                    "location": "body",
+                    "required": false,
+                    "description": "Optional data type e.g. xsd:string"
+                }
+            ],
+            "queryParams": {},
+            "mockResponse": {
+                "status": "success",
+                "message": "Configuration parameter updated successfully"
+            }
         }
     ]
 }

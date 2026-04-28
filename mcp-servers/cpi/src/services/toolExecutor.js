@@ -115,6 +115,22 @@ function buildQueryParams(params, parameters, staticQueryParams) {
     return queryParams;
 }
 
+// buildRequestBody create body in case PUT request needs a body
+function buildRequestBody(params, parameters) {
+    const body = {};
+
+    for (const paramConfig of parameters) {
+        if (paramConfig.location === 'body') {
+            const value = params[paramConfig.name];
+            if (value !== undefined && value !== '') {
+                body[paramConfig.name] = value;
+            }
+        }
+    }
+
+    return Object.keys(body).length > 0 ? body : null;
+}
+
 // parseCpiDate converts CPI OData date format to ISO string
 function parseCpiDate(cpiDate) {
     if (!cpiDate) return null;
@@ -224,8 +240,9 @@ async function executeTool(toolConfig, params) {
             response = await client.delete(url, requestConfig)
             break
         case 'PUT':
-            response = await client.put(url, null, requestConfig)
-            break
+            const putBody = buildRequestBody(cleanParams, toolConfig.parameters);
+            response = await client.put(url, putBody, requestConfig);
+            break;
         default:
             throw new Error(`Unsupported HTTP method: ${toolConfig.method}`)
     }
